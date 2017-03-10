@@ -92,6 +92,14 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     #parametersFormLayout.addRow("Enable Screenshots", self.enableScreenshotsFlagCheckBox)
 
     #
+    # Selector
+    #
+    self.catheterSelector = slicer.qMRMLNodeComboBox()
+    self.catheterSelector.nodeTypes = ["vtkMRMLTransformNode"]
+    self.catheterSelector.setMRMLScene( slicer.mrmlScene )
+    parametersFormLayout.addRow("Catheter Transform: ", self.catheterSelector)
+
+    #
     # Apply Button
     #
     self.applyButton = qt.QPushButton("Apply")
@@ -101,6 +109,7 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
 
     # connections
     self.applyButton.connect('clicked(bool)', self.onApplyButton)
+    self.catheterSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     #self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     #self.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
 
@@ -114,16 +123,30 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     pass
 
   def onSelect(self):
-    #self.applyButton.enabled = self.inputSelector.currentNode() and self.outputSelector.currentNode()
-    pass
+    self.applyButton.enabled = self.catheterSelector.currentNode()
   
   def onApplyButton(self):
     logic = EndoscopyProjectLogic()
-    
+    catheterTransform = self.catheterSelector.currentNode()
+    if catheterTransform == None:
+      return
+    #print('Test')
+    catheterTransform.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
     #enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
     #imageThreshold = self.imageThresholdSliderWidget.value
     #logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag)
 
+  def onTransformModified(self,caller,event):
+    #print('Transform modified')
+    catheterTransform = self.catheterSelector.currentNode()
+    if catheterTransform == None:
+      return
+    #catheterTip = [0,0,0,1]
+    catheterTipToRasMat = vtk.vtkMatrix4x4()
+    catheterTransform.GetMatrixTransformToWorld(catheterTipToRasMat)
+    #emTip_Ras = numpy.array(emTipToRasMat.MultiplyFloatPoint(emTip))
+    print(catheterTipToRasMat)
+    #return
 #
 # EndoscopyProjectLogic
 #
@@ -239,7 +262,7 @@ class EndoscopyProjectTest(ScriptedLoadableModuleTest):
   def runTest(self):
     """Run as few or as many tests as needed here.
     """
-    self.setUp()
+    #self.setUp()
     self.test_EndoscopyProject1()
 
   def test_EndoscopyProject1(self):
