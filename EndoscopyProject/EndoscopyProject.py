@@ -138,14 +138,21 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
 
   def onTransformModified(self,caller,event):
     #print('Transform modified')
+    import numpy as np
     catheterTransform = self.catheterSelector.currentNode()
     if catheterTransform == None:
       return
     #catheterTip = [0,0,0,1]
-    catheterTipToRasMat = vtk.vtkMatrix4x4()
-    catheterTransform.GetMatrixTransformToWorld(catheterTipToRasMat)
-    #emTip_Ras = numpy.array(emTipToRasMat.MultiplyFloatPoint(emTip))
-    print(catheterTipToRasMat)
+    #catheterTipToRasMat = vtk.vtkMatrix4x4()
+    #catheterTransform.GetMatrixTransformToWorld(catheterTipToRasMat)
+    #catheterTipToRasMat = numpy.array(catheterTipToRasMat)
+    eye = np.eye(4)
+    x = -0.5
+    y = -0.5
+    z = -0.5
+    translation = np.array([[x], [y], [z], [1]])
+    translationMat = np.column_stack((eye[:,0:3],translation))
+    print(translationMat)
     #return
 #
 # EndoscopyProjectLogic
@@ -266,5 +273,9 @@ class EndoscopyProjectTest(ScriptedLoadableModuleTest):
     self.test_EndoscopyProject1()
 
   def test_EndoscopyProject1(self):
-    
+    import numpy as np
+    new = np.eye(4)
+    ones = np.array([[1], [2], [3], [1]])
+    trans = np.column_stack((new[:,0:3],ones))
+    print(trans)
     print('Test complete')
