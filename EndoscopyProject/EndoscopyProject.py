@@ -127,33 +127,29 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
   
   def onApplyButton(self):
     logic = EndoscopyProjectLogic()
-    catheterTransform = self.catheterSelector.currentNode()
-    if catheterTransform == None:
+    catheterToRasNode = self.catheterSelector.currentNode()
+    if catheterToRasNode == None:
+      print('Failed to Apply')
       return
-    #print('Test')
-    catheterTransform.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
+    catheterToRasNode.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
     #enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
     #imageThreshold = self.imageThresholdSliderWidget.value
     #logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag)
 
   def onTransformModified(self,caller,event):
-    #print('Transform modified')
     import numpy as np
-    catheterTransform = self.catheterSelector.currentNode()
-    if catheterTransform == None:
-      return
-    #catheterTip = [0,0,0,1]
-    #catheterTipToRasMat = vtk.vtkMatrix4x4()
-    #catheterTransform.GetMatrixTransformToWorld(catheterTipToRasMat)
-    #catheterTipToRasMat = numpy.array(catheterTipToRasMat)
-    eye = np.eye(4)
-    x = -0.5
-    y = -0.5
-    z = -0.5
-    translation = np.array([[x], [y], [z], [1]])
-    translationMat = np.column_stack((eye[:,0:3],translation))
-    print(translationMat)
-    #return
+    catheterToRasNode = self.catheterSelector.currentNode()
+    catheterToRasTransform = vtk.vtkGeneralTransform()
+    catheterToRasNode.GetTransformToWorld(catheterToRasTransform)
+    catheterPosition_Catheter = np.array([0.0, 0.0, 0.0])
+    catheterPosition_Ras = catheterToRasTransform.TransformFloatPoint(catheterPosition_Catheter)    
+    #print(catheterPosition_Ras)
+    Artery = slicer.vtkMRMLMarkupsFiducialNode()
+    #Artery.GetNthFiducialWorldCoordinates(1, double coords[4])
+    Artery.AddFiducial(1,2,3)
+    #print(Artery.GetNthFiducialPosition(0,np.array(pos[3])))
+    print(Artery)
+    return
 #
 # EndoscopyProjectLogic
 #
