@@ -143,13 +143,40 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     catheterToRasNode.GetTransformToWorld(catheterToRasTransform)
     catheterPosition_Catheter = np.array([0.0, 0.0, 0.0])
     catheterPosition_Ras = catheterToRasTransform.TransformFloatPoint(catheterPosition_Catheter)    
-    #print(catheterPosition_Ras)
-    Artery = slicer.vtkMRMLMarkupsFiducialNode()
-    #Artery.GetNthFiducialWorldCoordinates(1, double coords[4])
-    Artery.AddFiducial(1,2,3)
-    #print(Artery.GetNthFiducialPosition(0,np.array(pos[3])))
-    print(Artery)
+    ArteryFids = slicer.util.getNode('Artery')
+    N = ArteryFids.GetNumberOfFiducials()
+    fiducialPositions = np.zeros([N,3])
+    for n in range(N):
+      #Fiducials should already be RAS looking at Markups module
+      position = ArteryFids.GetNthFiducialPosition(n,[0,0,0])
+
+      #List fiducial positions
+      fiducialPositions[n,0] = position[0]
+      fiducialPositions[n,1] = position[1]
+      fiducialPositions[n,2] = position[2]
+      
+      centerCatheter(catheterPosition_Ras,fiducialPositions,N)
     return
+
+  def centerCatheter(self,catheterPosition_Ras,fiducialPositions,N):
+    #First tries and finds the closest fiducial point
+    pointB = fiducialPositions[0] 
+    shortestDistance = numpy.linalg.norm(catheterPosition - fiducialPositions[0])
+    for point in range(1,N):
+      distance = numpy.linalg.norm(catheterPosition - fiducialPositions[point])
+      if distance < shortestDistance:
+        pointB = fiducialPositions[point] #This will be the second point of the line the catheter will snap to
+        shortestDistance = distance
+    if pointB == fiducialPositions[0]:
+      pointA = fiducialPositions[0]
+      pointB = fiducialPositions[1]
+    else:
+      pointA = fiducialPositions[point-1]
+
+    #Then find the point on the line pointA<---->pointB such normal is the direction vector of the catherterPosition
+    #The catheter will then be snapped to this point by a translation matrix
+    return
+    
 #
 # EndoscopyProjectLogic
 #
