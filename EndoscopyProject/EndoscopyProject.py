@@ -144,38 +144,69 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     catheterPosition_Catheter = np.array([0.0, 0.0, 0.0])
     catheterPosition_Ras = catheterToRasTransform.TransformFloatPoint(catheterPosition_Catheter)    
     ArteryFids = slicer.util.getNode('Artery')
-    N = ArteryFids.GetNumberOfFiducials()
-    fiducialPositions = np.zeros([N,3])
-    for n in range(N):
+    #N = ArteryFids.GetNumberOfFiducials()
+    #fiducialPositions = np.zeros((N,3))
+    #fiducialPositions = np.zeros([N,3])
+    #p = np.array([0,0,0])
+    #for i in range(N):
       #Fiducials should already be RAS looking at Markups module
-      position = ArteryFids.GetNthFiducialPosition(n,[0,0,0])
-
-      #List fiducial positions
-      fiducialPositions[n,0] = position[0]
-      fiducialPositions[n,1] = position[1]
-      fiducialPositions[n,2] = position[2]
-      
-      centerCatheter(catheterPosition_Ras,fiducialPositions,N)
+      #ArteryFids.GetNthFiducialPosition(i,p)
+      #fiducialPositions[i] = p
+    pathPoint_Ras = [0,0,0]
+    self.closestPointFiducials(ArteryFids,catheterPosition_Ras,pathPoint_Ras)
+    #print(catheterPosition_Ras)
+    x = pathPoint_Ras[0] - catheterPosition_Ras[0]
+    y = pathPoint_Ras[1] - catheterPosition_Ras[1]
+    z = pathPoint_Ras[2] - catheterPosition_Ras[2]
+    #transformationMatrix =  vtk.vtkTransform::Translate(x,y,z)
+    transformationMatrix = vtk.vtkTransform::Translate(x,y,z)
+    #transformationMatrix =  vtk.Translate(x,y,z)
+    #transformationMatrix = [[1,0,0,x],[0,1,0,y],[0,0,1,z],[0,0,0,1]]
+    catheterToRasNode.ApplyTransformMatrix(transformationMatrix)
     return
 
-  def centerCatheter(self,catheterPosition_Ras,fiducialPositions,N):
+  def closestPointFiducials(self, pathFids_Ras, camPosition_Ras, pathPoint_Ras):
+    n = pathFids_Ras.GetNumberOfFiducials()
+    if n < 2:
+      return False
+    minDistance = 9000000
+    for i in range(n - 1):
+      l1 = [0, 0, 0]
+      l2 = [0, 0, 0]
+      pathFids_Ras.GetNthFiducialPosition(i, l1)
+      pathFids_Ras.GetNthFiducialPosition(i + 1, l2)
+      t = vtk.mutable(0)
+      cp = [0, 0, 0]
+      d = vtk.vtkLine.DistanceToLine(camPosition_Ras, l1, l2, t, cp)
+      if d < minDistance:
+        minDistance = d
+        for j in range(3):
+          pathPoint_Ras[j] = cp[j]
+    return True
+
+  def centerCatheter(self,catheterPosition,fiducialPositions,N):
     #First tries and finds the closest fiducial point
-    pointB = fiducialPositions[0] 
+    pointB = fiducialPositions[0]
+    #print(pointB)
     shortestDistance = numpy.linalg.norm(catheterPosition - fiducialPositions[0])
     for point in range(1,N):
       distance = numpy.linalg.norm(catheterPosition - fiducialPositions[point])
       if distance < shortestDistance:
         pointB = fiducialPositions[point] #This will be the second point of the line the catheter will snap to
         shortestDistance = distance
-    if pointB == fiducialPositions[0]:
+    if numpy.array_equal(pointB,fiducialPositions[0]):
       pointA = fiducialPositions[0]
       pointB = fiducialPositions[1]
     else:
       pointA = fiducialPositions[point-1]
-
-    #Then find the point on the line pointA<---->pointB such normal is the direction vector of the catherterPosition
-    #The catheter will then be snapped to this point by a translation matrix
+    self.pointLineDistance(pointA,pointB,catheterPosition)
     return
+
+  def pointLineDistance(self,pointA,pointB,pointP):
+    u = pointB - pointA
+    print(u)
+    #v = pointP - pointA
+    
     
 #
 # EndoscopyProjectLogic
