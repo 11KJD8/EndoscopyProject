@@ -158,11 +158,11 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     x = pathPoint_Ras[0] - catheterPosition_Ras[0]
     y = pathPoint_Ras[1] - catheterPosition_Ras[1]
     z = pathPoint_Ras[2] - catheterPosition_Ras[2]
-    #transformationMatrix =  vtk.vtkTransform::Translate(x,y,z)
-    transformationMatrix = vtk.vtkTransform::Translate(x,y,z)
-    #transformationMatrix =  vtk.Translate(x,y,z)
-    #transformationMatrix = [[1,0,0,x],[0,1,0,y],[0,0,1,z],[0,0,0,1]]
-    catheterToRasNode.ApplyTransformMatrix(transformationMatrix)
+    transformationMatrix =  vtk.vtkMatrix4x4()
+    transformationMatrix.SetElement(0,3,x)
+    transformationMatrix.SetElement(1,3,y)
+    transformationMatrix.SetElement(2,3,z)
+    #catheterToRasNode.ApplyTransformMatrix(transformationMatrix)
     return
 
   def closestPointFiducials(self, pathFids_Ras, camPosition_Ras, pathPoint_Ras):
