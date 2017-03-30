@@ -92,12 +92,20 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     #parametersFormLayout.addRow("Enable Screenshots", self.enableScreenshotsFlagCheckBox)
 
     #
-    # Selector
+    # Transform Selector
     #
     self.catheterSelector = slicer.qMRMLNodeComboBox()
     self.catheterSelector.nodeTypes = ["vtkMRMLTransformNode"]
     self.catheterSelector.setMRMLScene( slicer.mrmlScene )
     parametersFormLayout.addRow("Catheter Transform: ", self.catheterSelector)
+
+    #
+    # Fiducial Selector
+    #
+    #self.catheterSelector = slicer.qMRMLNodeComboBox()
+    #self.catheterSelector.nodeTypes = ["vtkMRMLTransformNode"]
+    #self.catheterSelector.setMRMLScene( slicer.mrmlScene )
+    #parametersFormLayout.addRow("Catheter Transform: ", self.catheterSelector)
 
     #
     # Apply Button
