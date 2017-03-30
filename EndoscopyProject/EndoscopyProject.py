@@ -142,7 +142,8 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     catheterToRasTransform = vtk.vtkGeneralTransform()
     catheterToRasNode.GetTransformToWorld(catheterToRasTransform)
     catheterPosition_Catheter = np.array([0.0, 0.0, 0.0])
-    catheterPosition_Ras = catheterToRasTransform.TransformFloatPoint(catheterPosition_Catheter)    
+    catheterPosition_Ras = catheterToRasTransform.TransformFloatPoint(catheterPosition_Catheter)
+    slicer.mrmlScene.RemoveNode(catheterPosition_Ras)
     ArteryFids = slicer.util.getNode('Artery')
     #N = ArteryFids.GetNumberOfFiducials()
     #fiducialPositions = np.zeros((N,3))
@@ -158,10 +159,19 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     x = pathPoint_Ras[0] - catheterPosition_Ras[0]
     y = pathPoint_Ras[1] - catheterPosition_Ras[1]
     z = pathPoint_Ras[2] - catheterPosition_Ras[2]
-    transformationMatrix =  vtk.vtkMatrix4x4()
-    transformationMatrix.SetElement(0,3,x)
-    transformationMatrix.SetElement(1,3,y)
-    transformationMatrix.SetElement(2,3,z)
+    catheterToCenterTransform =  vtk.vtkMatrix4x4()
+    catheterToCenterTransform.SetElement(0,3,x)
+    catheterToCenterTransform.SetElement(1,3,y)
+    catheterToCenterTransform.SetElement(2,3,z)
+    catheterToCenterTransform.SetElement(0,0,1)
+    catheterToCenterTransform.SetElement(1,1,1)
+    catheterToCenterTransform.SetElement(2,2,1)
+    catheterToCenterTransform.SetElement(3,3,1)
+
+
+    adjustedCatheterPosition_Ras = slicer.vtkMRMLLinearTransformNode()
+    adjustedCatheterPosition_Ras.ApplyTransformMatrix(catheterToCenterTransform)
+    slicer.mrmlScene.AddNode(adjustedCatheterPosition_Ras)
     #catheterToRasNode.ApplyTransformMatrix(transformationMatrix)
     return
 
