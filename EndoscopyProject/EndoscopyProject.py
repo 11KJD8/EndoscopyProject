@@ -8,7 +8,6 @@ import numpy
 #
 # EndoscopyProject
 #
-
 class EndoscopyProject(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
@@ -25,12 +24,9 @@ class EndoscopyProject(ScriptedLoadableModule):
 #
 # EndoscopyProjectWidget
 #
-
 class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
-
-    # Instantiate and connect widgets ...
 
     #
     # Parameters Area
@@ -43,55 +39,6 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
 
     #
-    # input volume selector
-    #
-    #self.inputSelector = slicer.qMRMLNodeComboBox()
-    #self.inputSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
-    #self.inputSelector.selectNodeUponCreation = True
-    #self.inputSelector.addEnabled = False
-    #self.inputSelector.removeEnabled = False
-    #self.inputSelector.noneEnabled = False
-    #self.inputSelector.showHidden = False
-    #self.inputSelector.showChildNodeTypes = False
-    #self.inputSelector.setMRMLScene( slicer.mrmlScene )
-    #self.inputSelector.setToolTip( "Pick the input to the algorithm." )
-    #parametersFormLayout.addRow("Input Volume: ", self.inputSelector)
-
-    #
-    # output volume selector
-    #
-    #self.outputSelector = slicer.qMRMLNodeComboBox()
-    #self.outputSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
-    #self.outputSelector.selectNodeUponCreation = True
-    #self.outputSelector.addEnabled = True
-    #self.outputSelector.removeEnabled = True
-    #self.outputSelector.noneEnabled = True
-    #self.outputSelector.showHidden = False
-    #self.outputSelector.showChildNodeTypes = False
-    #self.outputSelector.setMRMLScene( slicer.mrmlScene )
-    #self.outputSelector.setToolTip( "Pick the output to the algorithm." )
-    #parametersFormLayout.addRow("Output Volume: ", self.outputSelector)
-
-    #
-    # threshold value
-    #
-    #self.imageThresholdSliderWidget = ctk.ctkSliderWidget()
-    #self.imageThresholdSliderWidget.singleStep = 0.1
-    #self.imageThresholdSliderWidget.minimum = -100
-    #self.imageThresholdSliderWidget.maximum = 100
-    #self.imageThresholdSliderWidget.value = 0.5
-    #self.imageThresholdSliderWidget.setToolTip("Set threshold value for computing the output image. Voxels that have intensities lower than this value will set to zero.")
-    #parametersFormLayout.addRow("Image threshold", self.imageThresholdSliderWidget)
-
-    #
-    # check box to trigger taking screen shots for later use in tutorials
-    #
-    #self.enableScreenshotsFlagCheckBox = qt.QCheckBox()
-    #self.enableScreenshotsFlagCheckBox.checked = 0
-    #self.enableScreenshotsFlagCheckBox.setToolTip("If checked, take screen shots for tutorials. Use Save Data to write them to disk.")
-    #parametersFormLayout.addRow("Enable Screenshots", self.enableScreenshotsFlagCheckBox)
-
-    #
     # Transform Selector
     #
     self.catheterSelector = slicer.qMRMLNodeComboBox()
@@ -102,10 +49,25 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     #
     # Fiducial Selector
     #
-    #self.catheterSelector = slicer.qMRMLNodeComboBox()
-    #self.catheterSelector.nodeTypes = ["vtkMRMLTransformNode"]
-    #self.catheterSelector.setMRMLScene( slicer.mrmlScene )
-    #parametersFormLayout.addRow("Catheter Transform: ", self.catheterSelector)
+    self.fiducialSelector = slicer.qMRMLNodeComboBox()
+    self.fiducialSelector.nodeTypes = ["vtkMRMLMarkupsFiducialNode"]
+    self.fiducialSelector.setMRMLScene( slicer.mrmlScene )
+    parametersFormLayout.addRow("Fiducials: ", self.fiducialSelector)
+
+    #
+    # output selector
+    #
+    self.outputSelector = slicer.qMRMLNodeComboBox()
+    self.outputSelector.nodeTypes = ["vtkMRMLTransformNode"]
+    #self.outputSelector.selectNodeUponCreation = True
+    #self.outputSelector.addEnabled = True
+    #self.outputSelector.removeEnabled = True
+    #self.outputSelector.noneEnabled = True
+    #self.outputSelector.showHidden = False
+    #self.outputSelector.showChildNodeTypes = False
+    self.outputSelector.setMRMLScene( slicer.mrmlScene )
+    parametersFormLayout.addRow("Output Transform: ", self.outputSelector)
+    #self.outputSelector.setToolTip( "Pick the output to the algorithm." )
 
     #
     # Apply Button
@@ -118,8 +80,8 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     # connections
     self.applyButton.connect('clicked(bool)', self.onApplyButton)
     self.catheterSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    #self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    #self.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.fiducialSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
 
     # Add vertical spacer
     self.layout.addStretch(1)
@@ -132,7 +94,7 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
 
   def onSelect(self):
     self.applyButton.enabled = self.catheterSelector.currentNode()
-  
+
   def onApplyButton(self):
     logic = EndoscopyProjectLogic()
     catheterToRasNode = self.catheterSelector.currentNode()
@@ -151,36 +113,17 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     catheterToRasNode.GetTransformToWorld(catheterToRasTransform)
     catheterPosition_Catheter = np.array([0.0, 0.0, 0.0])
     catheterPosition_Ras = catheterToRasTransform.TransformFloatPoint(catheterPosition_Catheter)
-    slicer.mrmlScene.RemoveNode(catheterPosition_Ras)
-    ArteryFids = slicer.util.getNode('Artery')
-    #N = ArteryFids.GetNumberOfFiducials()
-    #fiducialPositions = np.zeros((N,3))
-    #fiducialPositions = np.zeros([N,3])
-    #p = np.array([0,0,0])
-    #for i in range(N):
-      #Fiducials should already be RAS looking at Markups module
-      #ArteryFids.GetNthFiducialPosition(i,p)
-      #fiducialPositions[i] = p
-    pathPoint_Ras = [0,0,0]
-    self.closestPointFiducials(ArteryFids,catheterPosition_Ras,pathPoint_Ras)
-    #print(catheterPosition_Ras)
-    x = pathPoint_Ras[0] - catheterPosition_Ras[0]
-    y = pathPoint_Ras[1] - catheterPosition_Ras[1]
-    z = pathPoint_Ras[2] - catheterPosition_Ras[2]
-    catheterToCenterTransform =  vtk.vtkMatrix4x4()
-    catheterToCenterTransform.SetElement(0,3,x)
-    catheterToCenterTransform.SetElement(1,3,y)
-    catheterToCenterTransform.SetElement(2,3,z)
-    catheterToCenterTransform.SetElement(0,0,1)
-    catheterToCenterTransform.SetElement(1,1,1)
-    catheterToCenterTransform.SetElement(2,2,1)
-    catheterToCenterTransform.SetElement(3,3,1)
+    pathPoint_Ras = np.array([0, 0, 0])
+    ArteryFids = self.fiducialSelector.currentNode()
 
+    self.closestPointFiducials(ArteryFids, catheterPosition_Ras, pathPoint_Ras)
+    catheterToCenterTransform = vtk.vtkTransform()
+    catheterToPathArray = catheterPosition_Ras - pathPoint_Ras
+    catheterToCenterTransform.Translate(catheterToPathArray)
 
-    adjustedCatheterPosition_Ras = slicer.vtkMRMLLinearTransformNode()
-    adjustedCatheterPosition_Ras.ApplyTransformMatrix(catheterToCenterTransform)
-    slicer.mrmlScene.AddNode(adjustedCatheterPosition_Ras)
-    #catheterToRasNode.ApplyTransformMatrix(transformationMatrix)
+    #Get output transform
+    output = self.outputSelector.currentNode()
+    output.SetAndObserveTransformToParent(catheterToCenterTransform)
     return
 
   def closestPointFiducials(self, pathFids_Ras, camPosition_Ras, pathPoint_Ras):
@@ -220,12 +163,6 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     self.pointLineDistance(pointA,pointB,catheterPosition)
     return
 
-  def pointLineDistance(self,pointA,pointB,pointP):
-    u = pointB - pointA
-    print(u)
-    #v = pointP - pointA
-    
-    
 #
 # EndoscopyProjectLogic
 #
