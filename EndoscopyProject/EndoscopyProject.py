@@ -6,27 +6,42 @@ import logging
 import numpy
 
 #
-# EndoscopyProject
+# Kyle
 #
-class EndoscopyProject(ScriptedLoadableModule):
+
+class Kyle(ScriptedLoadableModule):
+  """Uses ScriptedLoadableModule base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
+  """
+
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "Endoscopy Project"
+    self.parent.title = "Kyle" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Examples"]
     self.parent.dependencies = []
-    self.parent.contributors = ["Kyle Delaney"]
+    self.parent.contributors = ["John Doe (AnyWare Corp.)"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
+    This is an example of scripted loadable module bundled in an extension.
+    It performs a simple thresholding on the input volume and optionally captures a screenshot.
     """
     self.parent.acknowledgementText = """
-    This file was originally developed by Kyle Delaney.
-    """
+    This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc.
+    and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
+""" # replace with organization, grant and thanks.
 
 #
-# EndoscopyProjectWidget
+# KyleWidget
 #
-class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
+
+class KyleWidget(ScriptedLoadableModuleWidget):
+  """Uses ScriptedLoadableModuleWidget base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
+  """
+
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
+
+    # Instantiate and connect widgets ...
 
     #
     # Parameters Area
@@ -39,35 +54,69 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
 
     #
-    # Transform Selector
+    # input volume selector
     #
-    self.catheterSelector = slicer.qMRMLNodeComboBox()
-    self.catheterSelector.nodeTypes = ["vtkMRMLTransformNode"]
-    self.catheterSelector.setMRMLScene( slicer.mrmlScene )
-    parametersFormLayout.addRow("Catheter Transform: ", self.catheterSelector)
+    #self.inputSelector = slicer.qMRMLNodeComboBox()
+    #self.inputSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
+    #self.inputSelector.selectNodeUponCreation = True
+    #self.inputSelector.addEnabled = False
+    #self.inputSelector.removeEnabled = False
+    #self.inputSelector.noneEnabled = False
+    #self.inputSelector.showHidden = False
+    #self.inputSelector.showChildNodeTypes = False
+    #self.inputSelector.setMRMLScene( slicer.mrmlScene )
+    #self.inputSelector.setToolTip( "Pick the input to the algorithm." )
+    #parametersFormLayout.addRow("Input Volume: ", self.inputSelector)
 
     #
-    # Fiducial Selector
+    # output volume selector
     #
-    self.fiducialSelector = slicer.qMRMLNodeComboBox()
-    self.fiducialSelector.nodeTypes = ["vtkMRMLMarkupsFiducialNode"]
-    self.fiducialSelector.setMRMLScene( slicer.mrmlScene )
-    parametersFormLayout.addRow("Fiducials: ", self.fiducialSelector)
-
-    #
-    # output selector
-    #
-    self.outputSelector = slicer.qMRMLNodeComboBox()
-    self.outputSelector.nodeTypes = ["vtkMRMLTransformNode"]
+    #self.outputSelector = slicer.qMRMLNodeComboBox()
+    #self.outputSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
     #self.outputSelector.selectNodeUponCreation = True
     #self.outputSelector.addEnabled = True
     #self.outputSelector.removeEnabled = True
     #self.outputSelector.noneEnabled = True
     #self.outputSelector.showHidden = False
     #self.outputSelector.showChildNodeTypes = False
-    self.outputSelector.setMRMLScene( slicer.mrmlScene )
-    parametersFormLayout.addRow("Output Transform: ", self.outputSelector)
+    #self.outputSelector.setMRMLScene( slicer.mrmlScene )
     #self.outputSelector.setToolTip( "Pick the output to the algorithm." )
+    #parametersFormLayout.addRow("Output Volume: ", self.outputSelector)
+
+    #
+    # threshold value
+    #
+    #self.imageThresholdSliderWidget = ctk.ctkSliderWidget()
+    #self.imageThresholdSliderWidget.singleStep = 0.1
+    #self.imageThresholdSliderWidget.minimum = -100
+    #self.imageThresholdSliderWidget.maximum = 100
+    #self.imageThresholdSliderWidget.value = 0.5
+    #self.imageThresholdSliderWidget.setToolTip("Set threshold value for computing the output image. Voxels that have intensities lower than this value will set to zero.")
+    #parametersFormLayout.addRow("Image threshold", self.imageThresholdSliderWidget)
+
+    #
+    # check box to trigger taking screen shots for later use in tutorials
+    #
+    #self.enableScreenshotsFlagCheckBox = qt.QCheckBox()
+    #self.enableScreenshotsFlagCheckBox.checked = 0
+    #self.enableScreenshotsFlagCheckBox.setToolTip("If checked, take screen shots for tutorials. Use Save Data to write them to disk.")
+    #parametersFormLayout.addRow("Enable Screenshots", self.enableScreenshotsFlagCheckBox)
+
+    #
+    # EM selector
+    #
+    self.emSelector = slicer.qMRMLNodeComboBox()
+    self.emSelector.nodeTypes = ["vtkMRMLLinearTransformNode"]
+    self.emSelector.setMRMLScene( slicer.mrmlScene )
+    parametersFormLayout.addRow("EM Tool Tip Transform: ", self.emSelector)
+
+    #
+    # Optical selector
+    #
+    self.opSelector = slicer.qMRMLNodeComboBox()
+    self.opSelector.nodeTypes = ["vtkMRMLLinearTransformNode"]
+    self.opSelector.setMRMLScene( slicer.mrmlScene )
+    parametersFormLayout.addRow("Optical Tool Tip Transform: ", self.opSelector)
 
     #
     # Apply Button
@@ -79,9 +128,8 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
 
     # connections
     self.applyButton.connect('clicked(bool)', self.onApplyButton)
-    self.catheterSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.fiducialSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.emSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.opSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
 
     # Add vertical spacer
     self.layout.addStretch(1)
@@ -89,90 +137,64 @@ class EndoscopyProjectWidget(ScriptedLoadableModuleWidget):
     # Refresh Apply button state
     self.onSelect()
 
+  def onTransformModified(self,caller,event):
+    print('Transform modified')
+    emTipTransform = self.emSelector.currentNode()
+    if emTipTransform == None:
+      return
+    opTipTransform = self.opSelector.currentNode()
+    if opTipTransform == None:
+      return
+    
+    emTip = [0,0,0,1]
+    opTip = [0,0,0,1]
+
+    emTipToRasMat = vtk.vtkMatrix4x4()
+    emTipTransform.GetMatrixTransformToWorld(emTipToRasMat)
+    emTip_Ras = numpy.array(emTipToRasMat.MultiplyFloatPoint(emTip))
+
+    opTipToRasMat = vtk.vtkMatrix4x4()
+    opTipTransform.GetMatrixTransformToWorld(opTipToRasMat)
+    opTip_Ras = numpy.array(opTipToRasMat.MultiplyFloatPoint(opTip))
+
+    distance = numpy.linalg.norm(emTip_Ras - opTip_Ras)
+    print(distance)
+    return distance
+
   def cleanup(self):
     pass
 
   def onSelect(self):
-    self.applyButton.enabled = self.catheterSelector.currentNode()
+    self.applyButton.enabled = self.emSelector.currentNode() and self.opSelector.currentNode()
+    
 
   def onApplyButton(self):
-    logic = EndoscopyProjectLogic()
-    catheterToRasNode = self.catheterSelector.currentNode()
-    if catheterToRasNode == None:
-      print('Failed to Apply')
+    #logic = KyleLogic()
+    emTipTransform = self.emSelector.currentNode()
+    if emTipTransform == None:
       return
-    catheterToRasNode.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
+    opTipTransform = self.opSelector.currentNode()
+    if opTipTransform == None:
+      return
+
+    emTipTransform.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
+    opTipTransform.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
     #enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
     #imageThreshold = self.imageThresholdSliderWidget.value
-    #logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag)
-
-  def onTransformModified(self,caller,event):
-    import numpy as np
-    catheterToRasNode = self.catheterSelector.currentNode()
-    catheterToRasTransform = vtk.vtkGeneralTransform()
-    catheterToRasNode.GetTransformToWorld(catheterToRasTransform)
-    catheterPosition_Catheter = np.array([0.0, 0.0, 0.0])
-    catheterPosition_Ras = catheterToRasTransform.TransformFloatPoint(catheterPosition_Catheter)
-    pathPoint_Ras = np.array([0, 0, 0])
-    ArteryFids = self.fiducialSelector.currentNode()
-
-    self.closestPointFiducials(ArteryFids, catheterPosition_Ras, pathPoint_Ras)
-    catheterToCenterTransform = vtk.vtkTransform()
-    catheterToPathArray = catheterPosition_Ras - pathPoint_Ras
-    catheterToCenterTransform.Translate(catheterToPathArray)
-
-    #Get output transform
-    output = self.outputSelector.currentNode()
-    output.SetAndObserveTransformToParent(catheterToCenterTransform)
-    return
-
-  def closestPointFiducials(self, pathFids_Ras, camPosition_Ras, pathPoint_Ras):
-    n = pathFids_Ras.GetNumberOfFiducials()
-    if n < 2:
-      return False
-    minDistance = 9000000
-    for i in range(n - 1):
-      l1 = [0, 0, 0]
-      l2 = [0, 0, 0]
-      pathFids_Ras.GetNthFiducialPosition(i, l1)
-      pathFids_Ras.GetNthFiducialPosition(i + 1, l2)
-      t = vtk.mutable(0)
-      cp = [0, 0, 0]
-      d = vtk.vtkLine.DistanceToLine(camPosition_Ras, l1, l2, t, cp)
-      if d < minDistance:
-        minDistance = d
-        for j in range(3):
-          pathPoint_Ras[j] = cp[j]
-    return True
-
-  def centerCatheter(self,catheterPosition,fiducialPositions,N):
-    #First tries and finds the closest fiducial point
-    pointB = fiducialPositions[0]
-    #print(pointB)
-    shortestDistance = numpy.linalg.norm(catheterPosition - fiducialPositions[0])
-    for point in range(1,N):
-      distance = numpy.linalg.norm(catheterPosition - fiducialPositions[point])
-      if distance < shortestDistance:
-        pointB = fiducialPositions[point] #This will be the second point of the line the catheter will snap to
-        shortestDistance = distance
-    if numpy.array_equal(pointB,fiducialPositions[0]):
-      pointA = fiducialPositions[0]
-      pointB = fiducialPositions[1]
-    else:
-      pointA = fiducialPositions[point-1]
-    self.pointLineDistance(pointA,pointB,catheterPosition)
-    return
+    #logic.run(self.emSelector.currentNode(), self.opSelector.currentNode())
 
 #
-# EndoscopyProjectLogic
+# KyleLogic
 #
 
-class EndoscopyProjectLogic(ScriptedLoadableModuleLogic):
+class KyleLogic(ScriptedLoadableModuleLogic):
   """This class should implement all the actual
   computation done by your module.  The interface
   should be such that other python code can import
   this class and make use of the functionality without
   requiring an instance of the Widget.
+  Uses ScriptedLoadableModuleLogic base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
 
   def hasImageData(self,volumeNode):
@@ -239,8 +261,9 @@ class EndoscopyProjectLogic(ScriptedLoadableModuleLogic):
     annotationLogic = slicer.modules.annotations.logic()
     annotationLogic.CreateSnapShot(name, description, type, 1, imageData)
 
-  def run(self, inputVolume, outputVolume, imageThreshold, enableScreenshots=0):
+  def run(self, inputVolume, outputVolume):
     """
+  (self, inputVolume, outputVolume, imageThreshold, enableScreenshots=0):
     Run the actual algorithm
     """
 
@@ -256,14 +279,98 @@ class EndoscopyProjectLogic(ScriptedLoadableModuleLogic):
 
     # Capture screenshot
     if enableScreenshots:
-      self.takeScreenshot('EndoscopyProjectTest-Start','MyScreenshot',-1)
-
+      self.takeScreenshot('KyleTest-Start','MyScreenshot',-1)
+  
     logging.info('Processing completed')
 
     return True
 
+  def GenerateTransformPoints(self,N,err):
+    #Jan 24
+    ReferenceToRas = slicer.vtkMRMLLinearTransformNode()
+    ReferenceToRas.SetName('ReferenceToRas')
+    slicer.mrmlScene.AddNode(ReferenceToRas)
 
-class EndoscopyProjectTest(ScriptedLoadableModuleTest):
+    #Jan 26
+    Scale = 100.0
+    Sigma = err
+    fromNormCoordinates = numpy.random.rand(N, 3)
+    noise = numpy.random.normal(0.0, Sigma, N*3)
+    RasFids = slicer.vtkMRMLMarkupsFiducialNode()
+    RasFids.SetName('RasPoints')
+    slicer.mrmlScene.AddNode(RasFids)
+    ReferenceFids = slicer.vtkMRMLMarkupsFiducialNode()
+    ReferenceFids.SetName('ReferencePoints')
+    slicer.mrmlScene.AddNode(ReferenceFids)
+    ReferenceFids.GetDisplayNode().SetSelectedColor(1,1,0)
+    RasPoints = vtk.vtkPoints() #Used for registration
+    ReferencePoints = vtk.vtkPoints()
+    for i in range(N):
+      x = (fromNormCoordinates[i, 0] - 0.5) * Scale
+      y = (fromNormCoordinates[i, 1] - 0.5) * Scale
+      z = (fromNormCoordinates[i, 2] - 0.5) * Scale
+      RasFids.AddFiducial(x, y, z) #For visualization in 
+      RasPoints.InsertNextPoint(x, y, z)
+      xx = x+noise[i*3]
+      yy = y+noise[i*3+1]
+      zz = z+noise[i*3+2]
+      ReferenceFids.AddFiducial(xx, yy, zz)
+      ReferencePoints.InsertNextPoint(xx, yy, zz)
+      slicer.mrmlScene.RemoveNode(ReferenceFids)
+      slicer.mrmlScene.RemoveNode(RasFids)
+    return [ReferencePoints,RasPoints,ReferenceToRas]
+
+
+  def registration(self,ReferencePoints,RasPoints,ReferenceToRas):
+    #Jan 31: Create landmark transform object that computes registration
+    landmarkTransform = vtk.vtkLandmarkTransform()
+    landmarkTransform.SetSourceLandmarks( RasPoints )
+    landmarkTransform.SetTargetLandmarks( ReferencePoints )
+    landmarkTransform.SetModeToRigidBody()
+    landmarkTransform.Update()
+    ReferenceToRasMatrix = vtk.vtkMatrix4x4()
+    landmarkTransform.GetMatrix( ReferenceToRasMatrix )
+    det = ReferenceToRasMatrix.Determinant()
+    if det < 1e-8:
+      print 'Unstable registration. Check input for collinear points.'
+    ReferenceToRas.SetMatrixTransformToParent(ReferenceToRasMatrix)
+    #averageDistance = logic.avgerageDistancePoints(RasPoints,ReferencePoints,ReferenceToRasMatrix)
+    return ReferenceToRasMatrix 
+
+
+    #print(catheterPosition_Ras)
+    #Artery = slicer.vtkMRMLMarkupsFiducialNode()
+    #Artery.GetNthFiducialWorldCoordinates(1, double coords[4])
+    #Artery.AddFiducial(1,2,3)
+  def avgerageDistancePoints(self,RasPoints,ReferencePoints,ReferenceToRasMatrix):
+    # Compute average point distance after registration
+    average = 0.0
+    numbersSoFar = 0
+    N = RasPoints.GetNumberOfPoints()
+    for i in range(N):
+      numbersSoFar = numbersSoFar + 1
+      ras = RasPoints.GetPoint(i)
+      pointA_Ras = numpy.array(ras)
+      pointA_Ras = numpy.append(pointA_Ras, 1)
+      pointA_Reference = ReferenceToRasMatrix.MultiplyFloatPoint(pointA_Ras)
+      ref = ReferencePoints.GetPoint(i)
+      pointB_Ref = numpy.array(ref)
+      pointB_Ref = numpy.append(pointB_Ref, 1)
+      distance = numpy.linalg.norm(pointA_Ras - pointB_Ref)
+      average = average + (distance - average) / numbersSoFar
+    #print "Average distance after registration: " + str(average)
+    return average
+
+  def TRE(self,ReferenceToRasMatrix):
+    #Feb 2: Computes the target registration error
+    targetPoint_Reference = numpy.array([0,0,0,1])
+    targetPoint_Ras = ReferenceToRasMatrix.MultiplyFloatPoint(targetPoint_Reference)
+    distance = numpy.linalg.norm(targetPoint_Reference - targetPoint_Ras)
+    #print('TRE = ' + str(distance))
+    return distance
+
+
+class KyleTest(ScriptedLoadableModuleTest):
   """
   This is the test case for your scripted module.
   Uses ScriptedLoadableModuleTest base class, available at:
@@ -278,13 +385,76 @@ class EndoscopyProjectTest(ScriptedLoadableModuleTest):
   def runTest(self):
     """Run as few or as many tests as needed here.
     """
-    #self.setUp()
-    self.test_EndoscopyProject1()
+    self.setUp()
+    self.test_Kyle1()
 
-  def test_EndoscopyProject1(self):
-    import numpy as np
-    new = np.eye(4)
-    ones = np.array([[1], [2], [3], [1]])
-    trans = np.column_stack((new[:,0:3],ones))
-    print(trans)
+  def test_Kyle1(self):
+    logic = KyleLogic()
+    #Jan 27
+    #Create Models
+    createModelsLogic = slicer.modules.createmodels.logic()
+    RasModelNode = createModelsLogic.CreateCoordinate(20,2)
+    RasModelNode.SetName('RasCoordinateModel')
+    ReferenceModelNode = createModelsLogic.CreateCoordinate(20,2)
+    ReferenceModelNode.SetName('ReferenceCoordinateModel')
+
+    #Set colours
+    RasModelNode.GetDisplayNode().SetColor(1,0,0)
+    ReferenceModelNode.GetDisplayNode().SetColor(0,0,1)
+
+    #Transform Reference Node
+    ReferenceModelToRas = slicer.vtkMRMLLinearTransformNode()
+    ReferenceModelToRas.SetName('ReferenceModelToRas')
+    slicer.mrmlScene.AddNode(ReferenceModelToRas)
+    ReferenceModelNode.SetAndObserveTransformNodeID(ReferenceModelToRas.GetID())
+
+    #Feb 7
+    def avgDistanceAndTRE():
+      FREs = []
+      TREs = []
+      numPoints = range(10,60,5)
+      len_numPoints = len(numPoints)
+      error = 3.0
+      for num in numPoints:
+        [ReferencePoints,RasPoints,ReferenceToRas] = logic.GenerateTransformPoints(num,error)
+        ReferenceToRasMatrix = logic.registration(ReferencePoints,RasPoints,ReferenceToRas)
+        FRE = logic.avgerageDistancePoints(RasPoints,ReferencePoints,ReferenceToRasMatrix)
+        print "Average distance: " + str(FRE)
+        FREs.append(FRE)
+        TRE = logic.TRE(ReferenceToRasMatrix)
+        print("TRE = " + str(TRE))
+        TREs.append(TRE)
+
+
+      #Feb 9
+      lns = slicer.mrmlScene.GetNodesByClass('vtkMRMLLayoutNode')
+      lns.InitTraversal()
+      ln = lns.GetNextItemAsObject()
+      ln.SetViewArrangement(24)
+      # Get the Chart View Node
+      cvns = slicer.mrmlScene.GetNodesByClass('vtkMRMLChartViewNode')
+      cvns.InitTraversal()
+      cvn = cvns.GetNextItemAsObject()
+      # Create an Array Node and add some data
+      TRE_dn = slicer.mrmlScene.AddNode(slicer.vtkMRMLDoubleArrayNode())
+      arrayTRE =TRE_dn.GetArray()
+      arrayTRE.SetNumberOfTuples(len_numPoints)
+      for i in range(len_numPoints):
+          arrayTRE.SetComponent(i, 0, numPoints[i])
+          arrayTRE.SetComponent(i, 1, TREs[i])
+          arrayTRE.SetComponent(i, 2, 0)
+      # Create a Chart Node.
+      cn = slicer.mrmlScene.AddNode(slicer.vtkMRMLChartNode())
+      # Add the Array Nodes to the Chart. The first argument is a string used for the legend and to refer to the Array when setting properties.
+      cn.AddArray('TRE', TRE_dn.GetID())
+
+      # Set a few properties on the Chart. The first argument is a string identifying which Array to assign the property. 
+      # 'default' is used to assign a property to the Chart itself (as opposed to an Array Node).
+      cn.SetProperty('default', 'title', 'TRE')
+      cn.SetProperty('default', 'xAxisLabel', 'Number of Points')
+      cn.SetProperty('default', 'yAxisLabel', 'Units')
+
+      # Tell the Chart View which Chart to display
+      cvn.SetChartNodeID(cn.GetID()) 
+    avgDistanceAndTRE()
     print('Test complete')
